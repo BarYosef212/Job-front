@@ -21,7 +21,6 @@ import {
   CheckCircle,
   Cancel,
   Error,
-  Warning,
 } from '@mui/icons-material';
 import { Website, WebsiteFilters } from '../types/job';
 import {
