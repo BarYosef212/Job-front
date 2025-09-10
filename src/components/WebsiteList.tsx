@@ -29,6 +29,7 @@ import {
   toggleWebsiteStatus,
   clearWebsiteErrors,
 } from '../services/websiteService';
+import { getScanningStatus } from '../services/jobService';
 import { WebsiteFilters as WebsiteFiltersComponent } from './WebsiteFilters';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -43,6 +44,7 @@ export function WebsiteList({ onEdit, onRefresh }: WebsiteListProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showErrorAlert, setShowErrorAlert] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const [filters, setFilters] = useState<WebsiteFilters>({
     search: '',
     isActive: undefined,
@@ -59,6 +61,15 @@ export function WebsiteList({ onEdit, onRefresh }: WebsiteListProps) {
       console.error('Error fetching websites:', err);
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  const checkScanningStatus = useCallback(async () => {
+    try {
+      const status = await getScanningStatus();
+      setIsScanning(status.isScanning);
+    } catch (error) {
+      console.error('Error checking scanning status:', error);
     }
   }, []);
 
@@ -88,7 +99,8 @@ export function WebsiteList({ onEdit, onRefresh }: WebsiteListProps) {
 
   useEffect(() => {
     fetchWebsites();
-  }, [fetchWebsites]);
+    checkScanningStatus();
+  }, [fetchWebsites, checkScanningStatus]);
 
   useEffect(() => {
     applyFilters();
@@ -101,6 +113,12 @@ export function WebsiteList({ onEdit, onRefresh }: WebsiteListProps) {
     );
     setShowErrorAlert(websitesWithErrors.length > 0);
   }, [allWebsites]);
+
+  // Check scanning status periodically
+  useEffect(() => {
+    const interval = setInterval(checkScanningStatus, 2000); // Check every 2 seconds
+    return () => clearInterval(interval);
+  }, [checkScanningStatus]);
 
   const handleToggleStatus = useCallback(
     async (websiteId: string) => {
@@ -287,38 +305,60 @@ export function WebsiteList({ onEdit, onRefresh }: WebsiteListProps) {
                             checked={website.isActive}
                             onChange={() => handleToggleStatus(website._id)}
                             color='primary'
+                            disabled={isScanning}
                           />
                         }
                         label=''
                       />
                     </Tooltip>
                     {onEdit && (
-                      <Tooltip title='Edit website'>
+                      <Tooltip
+                        title={
+                          isScanning
+                            ? 'Cannot edit during scan'
+                            : 'Edit website'
+                        }
+                      >
                         <IconButton
                           onClick={() => onEdit(website)}
                           color='primary'
                           size='small'
+                          disabled={isScanning}
                         >
                           <Edit />
                         </IconButton>
                       </Tooltip>
                     )}
                     {website.lastError && (
-                      <Tooltip title='Clear errors'>
+                      <Tooltip
+                        title={
+                          isScanning
+                            ? 'Cannot clear errors during scan'
+                            : 'Clear errors'
+                        }
+                      >
                         <IconButton
                           onClick={() => handleClearErrors(website._id)}
                           color='warning'
                           size='small'
+                          disabled={isScanning}
                         >
                           <Error />
                         </IconButton>
                       </Tooltip>
                     )}
-                    <Tooltip title='Delete website'>
+                    <Tooltip
+                      title={
+                        isScanning
+                          ? 'Cannot delete during scan'
+                          : 'Delete website'
+                      }
+                    >
                       <IconButton
                         onClick={() => handleDelete(website._id)}
                         color='error'
                         size='small'
+                        disabled={isScanning}
                       >
                         <Delete />
                       </IconButton>

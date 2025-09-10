@@ -50,6 +50,11 @@ export const getStats = async () => {
   return response.data;
 };
 
+export const getScanningStatus = async (): Promise<{ isScanning: boolean }> => {
+  const response = await api.get('/jobs/scanning-status');
+  return response.data;
+};
+
 // Legacy object-based service (for backward compatibility)
 export const jobService = {
   getJobs,
@@ -58,4 +63,5 @@ export const jobService = {
   updateJob,
   deleteJob,
   getStats,
+  getScanningStatus,
 };

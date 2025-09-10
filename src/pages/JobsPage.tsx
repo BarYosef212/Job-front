@@ -1,4 +1,4 @@
-import  { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -12,6 +12,7 @@ import { JobList } from '../components/JobList';
 import { JobFilters } from '../components/JobFilters';
 import { JobStats } from '../components/JobStats';
 import { JobFilters as JobFiltersType } from '../types/job';
+import { getScanningStatus } from '../services/jobService';
 
 export function JobsPage() {
   const [jobFilters, setJobFilters] = useState<JobFiltersType>({
@@ -21,6 +22,22 @@ export function JobsPage() {
   });
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState<any>(null);
+  const [isScanning, setIsScanning] = useState(false);
+
+  const checkScanningStatus = useCallback(async () => {
+    try {
+      const status = await getScanningStatus();
+      setIsScanning(status.isScanning);
+    } catch (error) {
+      console.error('Error checking scanning status:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkScanningStatus();
+    const interval = setInterval(checkScanningStatus, 2000); // Check every 2 seconds
+    return () => clearInterval(interval);
+  }, [checkScanningStatus]);
 
   const handleJobFiltersChange = (filters: JobFiltersType) => {
     setJobFilters(filters);
@@ -81,9 +98,15 @@ export function JobsPage() {
           <Button
             variant='contained'
             size='large'
-            startIcon={scanning ? <CircularProgress size={20} /> : <Search />}
+            startIcon={
+              scanning || isScanning ? (
+                <CircularProgress size={20} />
+              ) : (
+                <Search />
+              )
+            }
             onClick={handleScanJobs}
-            disabled={scanning}
+            disabled={scanning || isScanning}
             sx={{
               borderRadius: 2,
               textTransform: 'none',
@@ -97,9 +120,29 @@ export function JobsPage() {
               },
             }}
           >
-            {scanning ? 'Scanning...' : 'Scan Jobs'}
+            {scanning
+              ? 'Scanning...'
+              : isScanning
+              ? 'Scan in Progress...'
+              : 'Scan Jobs'}
           </Button>
         </Box>
+
+        {isScanning && (
+          <Alert
+            severity='info'
+            sx={{
+              mb: 3,
+              borderRadius: 2,
+              '& .MuiAlert-message': {
+                fontWeight: 500,
+              },
+            }}
+          >
+            🔄 A job scan is currently in progress. Please wait for it to
+            complete before starting a new scan.
+          </Alert>
+        )}
 
         {scanResult && (
           <Alert
