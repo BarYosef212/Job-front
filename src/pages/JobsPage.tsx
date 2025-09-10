@@ -1,19 +1,17 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import {
   Box,
   Typography,
   Button,
   Alert,
   CircularProgress,
-  Container,
   Paper,
 } from '@mui/material';
-import { Refresh, Search } from '@mui/icons-material';
+import { Search } from '@mui/icons-material';
 import { JobList } from '../components/JobList';
 import { JobFilters } from '../components/JobFilters';
 import { JobStats } from '../components/JobStats';
 import { JobFilters as JobFiltersType } from '../types/job';
-import { getJobs } from '../services/jobService';
 
 export function JobsPage() {
   const [jobFilters, setJobFilters] = useState<JobFiltersType>({

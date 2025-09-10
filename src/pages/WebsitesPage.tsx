@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import { Box, Typography, Fab, Paper } from '@mui/material';
 import { Add, Language } from '@mui/icons-material';
 import { WebsiteList } from '../components/WebsiteList';
@@ -9,7 +9,7 @@ import { JobStats } from '../components/JobStats';
 export function WebsitesPage() {
   const [showWebsiteForm, setShowWebsiteForm] = useState(false);
   const [editingWebsite, setEditingWebsite] = useState<Website | undefined>();
-  const [refreshKey, setRefreshKey] = useState(0);
+
 
   const handleEditWebsite = (website: Website) => {
     setEditingWebsite(website);
@@ -21,9 +21,7 @@ export function WebsitesPage() {
     setEditingWebsite(undefined);
   };
 
-  const handleFormSuccess = () => {
-    setRefreshKey((prev) => prev + 1);
-  };
+
 
   return (
     <Box sx={{ p: 4 }}>
@@ -70,7 +68,6 @@ export function WebsitesPage() {
           <WebsiteForm
             website={editingWebsite}
             onClose={handleCloseForm}
-            onSuccess={handleFormSuccess}
           />
         </Paper>
       ) : (
@@ -85,7 +82,6 @@ export function WebsitesPage() {
         >
           <WebsiteList
             onEdit={handleEditWebsite}
-            onRefresh={() => setRefreshKey((prev) => prev + 1)}
           />
         </Paper>
       )}

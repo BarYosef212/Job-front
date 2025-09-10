@@ -6,13 +6,10 @@ import {
   Card,
   CardContent,
   Button,
-  Container,
 } from '@mui/material';
 import {
   Language,
   Work,
-  TrendingUp,
-  Refresh,
   Add,
   Search,
   Settings,

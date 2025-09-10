@@ -5,7 +5,6 @@ import {
   CardContent,
   Typography,
   Chip,
-  Button,
   Grid,
   CircularProgress,
   Alert,
@@ -26,9 +25,8 @@ import {
   Language,
   ExpandMore,
   Work,
-  LocationOn,
 } from '@mui/icons-material';
-import { Job, JobFilters } from '../types/job';
+import {  JobFilters } from '../types/job';
 import { getJobs } from '../services/jobService';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -54,32 +52,25 @@ export function JobList({ filters, onRefresh }: JobListProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const fetchJobs = async () => {
-    try {
-      setLoading(true);
-      const data = await getJobs(filters);
-      setJobs(Array.isArray(data) ? data : []);
-      setError('');
-    } catch (err) {
-      setError('Failed to fetch jobs');
-      console.error('Error fetching jobs:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  
 
   useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setLoading(true);
+        const data = await getJobs(filters);
+        setJobs(Array.isArray(data) ? data : []);
+        setError('');
+      } catch (err) {
+        setError('Failed to fetch jobs');
+        console.error('Error fetching jobs:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchJobs();
   }, [filters]);
 
-  const handleUpdateJob = async (jobId: string, updates: any) => {
-    try {
-      console.log('Update job:', jobId, updates);
-      onRefresh?.();
-    } catch (error) {
-      console.error('Failed to update job:', error);
-    }
-  };
 
   if (loading) {
     return (
