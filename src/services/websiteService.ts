@@ -21,6 +21,12 @@ export const getWebsites = async (filters?: WebsiteFilters) => {
   return response.data;
 };
 
+// Get all websites without any filters (for frontend filtering)
+export const getAllWebsites = async () => {
+  const response = await api.get('/websites');
+  return response.data;
+};
+
 export const getWebsite = async (id: string) => {
   const response = await api.get(`/websites/${id}`);
   return response.data;
@@ -53,6 +59,7 @@ export const toggleWebsiteStatus = async (id: string) => {
 // Legacy object-based service (for backward compatibility)
 export const websiteService = {
   getWebsites,
+  getAllWebsites,
   getWebsite,
   createWebsite,
   updateWebsite,

@@ -23,7 +23,7 @@ import {
 } from '@mui/icons-material';
 import { Website, WebsiteFilters } from '../types/job';
 import {
-  getWebsites,
+  getAllWebsites,
   deleteWebsite,
   toggleWebsiteStatus,
 } from '../services/websiteService';
@@ -36,7 +36,8 @@ interface WebsiteListProps {
 }
 
 export function WebsiteList({ onEdit, onRefresh }: WebsiteListProps) {
-  const [websites, setWebsites] = useState<Website[]>([]);
+  const [allWebsites, setAllWebsites] = useState<Website[]>([]);
+  const [filteredWebsites, setFilteredWebsites] = useState<Website[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filters, setFilters] = useState<WebsiteFilters>({
@@ -47,8 +48,8 @@ export function WebsiteList({ onEdit, onRefresh }: WebsiteListProps) {
   const fetchWebsites = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getWebsites(filters);
-      setWebsites(Array.isArray(data) ? data : []);
+      const data = await getAllWebsites(); // Fetch all websites without filters
+      setAllWebsites(Array.isArray(data) ? data : []);
       setError('');
     } catch (err) {
       setError('Failed to fetch websites');
@@ -56,11 +57,39 @@ export function WebsiteList({ onEdit, onRefresh }: WebsiteListProps) {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, []);
+
+  // Filter websites on the frontend
+  const applyFilters = useCallback(() => {
+    let filtered = [...allWebsites];
+
+    // Apply search filter
+    if (filters.search) {
+      const searchTerm = filters.search.toLowerCase();
+      filtered = filtered.filter(
+        (website) =>
+          website.name.toLowerCase().includes(searchTerm) ||
+          website.url.toLowerCase().includes(searchTerm),
+      );
+    }
+
+    // Apply status filter
+    if (filters.isActive !== undefined) {
+      filtered = filtered.filter(
+        (website) => website.isActive === filters.isActive,
+      );
+    }
+
+    setFilteredWebsites(filtered);
+  }, [allWebsites, filters]);
 
   useEffect(() => {
     fetchWebsites();
   }, [fetchWebsites]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
 
   const handleToggleStatus = useCallback(
     async (websiteId: string) => {
@@ -115,7 +144,7 @@ export function WebsiteList({ onEdit, onRefresh }: WebsiteListProps) {
     );
   }
 
-  if (websites.length === 0) {
+  if (filteredWebsites.length === 0) {
     return (
       <Box>
         <WebsiteFiltersComponent
@@ -123,7 +152,9 @@ export function WebsiteList({ onEdit, onRefresh }: WebsiteListProps) {
           onFiltersChange={handleFiltersChange}
         />
         <Alert severity='info' sx={{ mb: 2 }}>
-          No websites found. Add a new website to get started.
+          {allWebsites.length === 0
+            ? 'No websites found. Add a new website to get started.'
+            : 'No websites match your current filters. Try adjusting your search criteria.'}
         </Alert>
       </Box>
     );
@@ -136,7 +167,7 @@ export function WebsiteList({ onEdit, onRefresh }: WebsiteListProps) {
         onFiltersChange={handleFiltersChange}
       />
       <Grid container spacing={3}>
-        {websites.map((website) => (
+        {filteredWebsites.map((website) => (
           <Grid item xs={12} md={6} key={website._id}>
             <Card elevation={2} sx={{ height: '100%' }}>
               <CardContent>
@@ -157,13 +188,17 @@ export function WebsiteList({ onEdit, onRefresh }: WebsiteListProps) {
                         color='text.secondary'
                         sx={{ wordBreak: 'break-all' }}
                         component='a'
-                        href={website.url.startsWith('http') ? website.url : `https://${website.url}`}
+                        href={
+                          website.url.startsWith('http')
+                            ? website.url
+                            : `https://${website.url}`
+                        }
                         target='_blank'
                         rel='noopener noreferrer'
                       >
                         {website.url}
                       </Typography>
-                  </Box>
+                    </Box>
 
                     {website.lastScanned && (
                       <Box display='flex' alignItems='center' gap={1} mb={2}>
