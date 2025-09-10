@@ -20,12 +20,15 @@ import {
   Schedule,
   CheckCircle,
   Cancel,
+  Error,
+  Warning,
 } from '@mui/icons-material';
 import { Website, WebsiteFilters } from '../types/job';
 import {
   getAllWebsites,
   deleteWebsite,
   toggleWebsiteStatus,
+  clearWebsiteErrors,
 } from '../services/websiteService';
 import { WebsiteFilters as WebsiteFiltersComponent } from './WebsiteFilters';
 import { formatDistanceToNow } from 'date-fns';
@@ -40,6 +43,7 @@ export function WebsiteList({ onEdit, onRefresh }: WebsiteListProps) {
   const [filteredWebsites, setFilteredWebsites] = useState<Website[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showErrorAlert, setShowErrorAlert] = useState(false);
   const [filters, setFilters] = useState<WebsiteFilters>({
     search: '',
     isActive: undefined,
@@ -91,6 +95,14 @@ export function WebsiteList({ onEdit, onRefresh }: WebsiteListProps) {
     applyFilters();
   }, [applyFilters]);
 
+  // Show error alert when websites have errors
+  useEffect(() => {
+    const websitesWithErrors = allWebsites.filter(
+      (website) => website.lastError,
+    );
+    setShowErrorAlert(websitesWithErrors.length > 0);
+  }, [allWebsites]);
+
   const handleToggleStatus = useCallback(
     async (websiteId: string) => {
       try {
@@ -113,6 +125,25 @@ export function WebsiteList({ onEdit, onRefresh }: WebsiteListProps) {
           onRefresh?.();
         } catch (error) {
           console.error('Failed to delete website:', error);
+        }
+      }
+    },
+    [fetchWebsites, onRefresh],
+  );
+
+  const handleClearErrors = useCallback(
+    async (websiteId: string) => {
+      if (
+        window.confirm(
+          'Are you sure you want to clear all errors for this website?',
+        )
+      ) {
+        try {
+          await clearWebsiteErrors(websiteId);
+          await fetchWebsites(); // Refresh the list
+          onRefresh?.();
+        } catch (error) {
+          console.error('Failed to clear website errors:', error);
         }
       }
     },
@@ -166,6 +197,20 @@ export function WebsiteList({ onEdit, onRefresh }: WebsiteListProps) {
         filters={filters}
         onFiltersChange={handleFiltersChange}
       />
+
+      {showErrorAlert && (
+        <Alert
+          severity='warning'
+          sx={{ mb: 3, borderRadius: 2 }}
+          onClose={() => setShowErrorAlert(false)}
+        >
+          <Typography variant='body2' sx={{ fontWeight: 600 }}>
+            ⚠️ Some websites have scanning errors. Check the error details below
+            and consider clearing them once resolved.
+          </Typography>
+        </Alert>
+      )}
+
       <Grid container spacing={3}>
         {filteredWebsites.map((website) => (
           <Grid item xs={12} md={6} key={website._id}>
@@ -211,6 +256,23 @@ export function WebsiteList({ onEdit, onRefresh }: WebsiteListProps) {
                         </Typography>
                       </Box>
                     )}
+
+                    {website.lastError && (
+                      <Box display='flex' alignItems='center' gap={1} mb={2}>
+                        <Error fontSize='small' color='error' />
+                        <Typography variant='body2' color='error.main'>
+                          Last error:{' '}
+                          {website.lastErrorAt
+                            ? formatDistanceToNow(
+                                new Date(website.lastErrorAt),
+                                {
+                                  addSuffix: true,
+                                },
+                              )
+                            : 'Unknown time'}
+                        </Typography>
+                      </Box>
+                    )}
                   </Box>
                   <Box display='flex' gap={1}>
                     <Tooltip
@@ -242,6 +304,17 @@ export function WebsiteList({ onEdit, onRefresh }: WebsiteListProps) {
                         </IconButton>
                       </Tooltip>
                     )}
+                    {website.lastError && (
+                      <Tooltip title='Clear errors'>
+                        <IconButton
+                          onClick={() => handleClearErrors(website._id)}
+                          color='warning'
+                          size='small'
+                        >
+                          <Error />
+                        </IconButton>
+                      </Tooltip>
+                    )}
                     <Tooltip title='Delete website'>
                       <IconButton
                         onClick={() => handleDelete(website._id)}
@@ -266,7 +339,46 @@ export function WebsiteList({ onEdit, onRefresh }: WebsiteListProps) {
                     size='small'
                     variant='outlined'
                   />
+                  {website.lastError && (
+                    <Chip
+                      label='Has Error'
+                      size='small'
+                      color='error'
+                      icon={<Error />}
+                    />
+                  )}
                 </Box>
+
+                {website.lastError && (
+                  <Box sx={{ mb: 2 }}>
+                    <Typography
+                      variant='caption'
+                      color='error.main'
+                      gutterBottom
+                      sx={{ fontWeight: 600 }}
+                    >
+                      Error Details:
+                    </Typography>
+                    <Box
+                      sx={{
+                        p: 1.5,
+                        bgcolor: 'error.light',
+                        borderRadius: 1,
+                        border: '1px solid',
+                        borderColor: 'error.main',
+                        mt: 0.5,
+                      }}
+                    >
+                      <Typography
+                        variant='caption'
+                        color='error.dark'
+                        sx={{ wordBreak: 'break-word' }}
+                      >
+                        {website.lastError}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
 
                 {website.keywords && website.keywords.length > 0 && (
                   <Box>

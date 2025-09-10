@@ -13,6 +13,8 @@ export interface Website {
   isActive: boolean;
   keywords?: string[];
   lastScanned?: string;
+  lastError?: string;
+  lastErrorAt?: string;
   createdAt: string;
   updatedAt: string;
 }

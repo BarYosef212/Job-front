@@ -13,6 +13,7 @@ import {
   Language,
   CheckCircle,
   TrendingUp,
+  Error,
 } from '@mui/icons-material';
 import { JobStats as JobStatsType } from '../types/job';
 import { getStats, getJobs } from '../services/jobService';
@@ -52,6 +53,11 @@ export function JobStats() {
 
   // Calculate scanned websites from jobs data
   const scannedWebsites = jobs.length;
+
+  // Calculate websites with errors
+  const websitesWithErrors = websites.filter(
+    (website) => website.lastError,
+  ).length;
 
   if (loading) {
     return (
@@ -94,6 +100,14 @@ export function JobStats() {
       gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
       description: 'Currently monitoring',
     },
+    {
+      title: 'Websites with Errors',
+      value: websitesWithErrors.toString(),
+      icon: <Error />,
+      color: 'error' as const,
+      gradient: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+      description: 'Need attention',
+    },
   ];
 
   return (
@@ -107,7 +121,7 @@ export function JobStats() {
 
       <Grid container spacing={3}>
         {statCards.map((stat, index) => (
-          <Grid item xs={12} sm={6} md={4} key={index}>
+          <Grid item xs={12} sm={6} md={3} key={index}>
             <Card
               sx={{
                 height: '100%',

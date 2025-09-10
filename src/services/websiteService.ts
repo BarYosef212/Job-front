@@ -56,6 +56,11 @@ export const toggleWebsiteStatus = async (id: string) => {
   return response.data;
 };
 
+export const clearWebsiteErrors = async (id: string) => {
+  const response = await api.patch(`/websites/${id}/clear-errors`);
+  return response.data;
+};
+
 // Legacy object-based service (for backward compatibility)
 export const websiteService = {
   getWebsites,
@@ -65,4 +70,5 @@ export const websiteService = {
   updateWebsite,
   deleteWebsite,
   toggleWebsiteStatus,
+  clearWebsiteErrors,
 };
